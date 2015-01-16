@@ -190,8 +190,8 @@ def includeJS(affichage):
 		<link rel="stylesheet" href="static/jqx.base.css" type="text/css" />
 		<link rel="stylesheet" href="static/opennav.css" type="text/css" />
 		<link rel="stylesheet" href="static/bootstrap.min.css" type="text/css" />
-		<script type="text/javascript" src="static/bootstrap.min.js"></script>
 		<script type="text/javascript" src="static/jquery-1.11.1.min.js"></script>
+		<script type="text/javascript" src="static/bootstrap.min.js"></script>
 		<script type="text/javascript" src="static/jqxcore.js"></script>
 		<script type="text/javascript" src="static/jqxchart.js"></script>
 		<script type="text/javascript" src="static/jqxgauge.js"></script>
@@ -199,6 +199,11 @@ def includeJS(affichage):
 		<script type="text/javascript" src="static/jqxdraw.js"></script>
 		<script type="text/javascript" src="static/jqxchart.core.js"></script>
 		<script type="text/javascript" src="static/jqxchart.rangeselector.js"></script>
+		<script type="text/javascript" src="static/jqwidgets/jqxslider.js"></script>
+		<script type="text/javascript" src="static/jqwidgets/jqxbuttons.js"></script>
+		<script type="text/javascript" src="static/jqwidgets/jqxlistbox.js"></script>
+		<script type="text/javascript" src="static/jqwidgets/jqxscrollbar.js"></script>
+		<script type="text/javascript" src="static/jqwidgets/jqxdropdownlist.js"></script>
 		"""
 		
 	return includeJS
@@ -266,15 +271,15 @@ def codeJS(affichage):
 
 				value: 0
 			});
-			
+
 			// prepare the data
 			var source =
             {
                 datatype: "csv",
                 datafields: [
                     { name: 'Date' },
-                    { name: 'temp' },
-                    { name: 'pressure' },
+                    { name: 'Temp' },
+                    { name: 'Pressure' },
                     ],
                 url: 'data/dataOpenNav.txt'
             };
@@ -322,8 +327,8 @@ def codeJS(affichage):
                                 description: 'en hPa'
                             },
                             series: [
-                                    { dataField: 'pressure', displayText: 'Préssion', opacity: 1, lineWidth: 2, symbolType: 'circle', fillColorSymbolSelected: 'white', symbolSize: 4 },
-                                    { dataField: 'temp', displayText: 'Température', opacity: 1, lineWidth: 2, symbolType: 'circle', fillColorSymbolSelected: 'white', symbolSize: 4 }
+                                    { dataField: 'Pressure', displayText: 'Préssion', opacity: 1, lineWidth: 2, symbolType: 'circle', fillColorSymbolSelected: 'white', symbolSize: 4 },
+                                    { dataField: 'Temp', displayText: 'Température', opacity: 1, lineWidth: 2, symbolType: 'circle', fillColorSymbolSelected: 'white', symbolSize: 4 }
                                 ]
                         }
                     ]
@@ -347,6 +352,7 @@ def codeJS(affichage):
 		} // fin refresh value
 		"""
 		+
+
 		manageReponseAjaxServeur()
 		+
 		"""
@@ -382,11 +388,11 @@ function manageReponseAjaxServeur(dataIn){
 	$('#gaugeContainer').jqxGauge('value', values[2]);
 	$('#gaugeContainerTemp').jqxLinearGauge('value', values[0]);
 
-	var timestamp = new Date();
-	timestamp.setSeconds(timestamp.getSeconds());
-	timestamp.setMilliseconds(0);
-	data.push({ Date: timestamp, value: values[1] });
-	$('#chartContainer').jqxChart('update');
+	//var timestamp = new Date();
+	//timestamp.setSeconds(timestamp.getSeconds());
+	//timestamp.setMilliseconds(0);
+	//data.push({ Date: timestamp, value: values[1] });
+	//$('#chartContainer').jqxChart('update');
 
 
 	

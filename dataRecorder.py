@@ -24,7 +24,7 @@
 import Adafruit_BMP.BMP085 as BMP085
 import time
 
-dataOpenNav = "/home/olimex/opennav/data/dataOpenNav.txt"
+dataOpenNav = "/home/olimex/diginav/data/dataOpenNav.txt"
 
 def main():
 	fileData = open(dataOpenNav,'a')
@@ -33,7 +33,7 @@ def main():
 		sensor = BMP085.BMP085()
 		sensor = BMP085.BMP085(mode=BMP085.BMP085_ULTRAHIGHRES)
 		
-		fileData.write(str(time.strftime('%d/%m/%y %H:%M',time.localtime()))+';')
+		fileData.write(str(time.strftime('%H:%M',time.localtime()))+';')
 		fileData.write(str(sensor.read_temperature())+';')
 		fileData.write(str(sensor.read_pressure()/100)+';')
 		fileData.write('\n')
