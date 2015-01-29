@@ -61,6 +61,10 @@ def bottleHtmlInitial():
 @route('/afficheur')
 def bottleHtmlInitial():
 	return pageInitialeHTMLJS("afficheur")
+	
+@route('/graphique')
+def bottleHtmlInitial():
+	return pageInitialeHTMLJS("graphique")
 
 #--- gestion requetes AJAX --- 
 """
@@ -108,7 +112,7 @@ def pageInitialeHTMLJS(affichage):
 	<html>
 		<head> 
 			<meta charset="utf-8" />
-			<title>OpenNav</title>
+			<title>DigiNav</title>
 			"""
 			+includeJS(affichage)+
 			"""
@@ -155,23 +159,75 @@ def bodyHTML(affichage):
 		<tr></tr>
 		<td align="center"><h2 id="lon" style="font-size:40pt;">8888</h2></td>
 		</table>"""	
-	else:
+	elif affichage == "graphique":
+		
+		bodyHTML="""<p class="text-center">						
+						<div class="alert alert-info">
+							<h1>DigiNav Dashboard</h1>
+						</div>
+					</p>
+						<br />
+					<div align="center">	
+						<div id="chartContainer" style="width:800px; height:300px;"></div>
+					</div>"""
+		
+	else :
 	
 		bodyHTML="""<!--<textarea rows="4" cols="50" id="textarea"></textarea><br>-->
-		<table class="tabcenter" width="90%">
-		<tr>
-		<td colspan="3" align="center"><div class="alert alert-info" role="alert"><h1>OpenNav Dashboard</h1></div></td>
-		</tr>
-		<tr>
-		<td align="center"><div id="gaugeContainerTemp"></div><div id="temp"></div></td>
-		<td align="center"><div id="gaugeContainer"></div><h4 id="sog"></h4></td>
-		<td><div class="well">Préssion<h1 id="pressure" style="font-size:40pt;">8888</h1><br /><br />
-		COG<h1 id="cog" style="font-size:40pt;">8888</h1><br /><br />
-		<h2 id="lat" style="font-size:40pt;">8888</h2><br />
-		<h2 id="lon" style="font-size:40pt;">8888</h2></div></td>
-		</tr>
-		</table>
-		<div id='chartContainer' style="width:800px; height:500px;"></div>
+				<p class="text-center">
+					<div class="alert alert-info">
+						<h1>DigiNav Dashboard</h1>
+					</div>
+				</p>
+
+				<div class="container-fluid">
+				<div class="row">
+					<div class="col-xs-6 col-sm-4">
+						<div class="panel panel-primary">
+							<div class="panel-heading">
+								<h3 class="panel-title">Latidude / Longitude</h3>
+							</div>
+
+							<div class="panel-body">
+								<h2 id="lat">8888</h2>
+
+								<h2 id="lon">8888</h2>
+							</div>
+						</div>
+					</div>
+
+					<div class="col-xs-6 col-sm-4">
+						<div class="panel panel-primary">
+							<div class="panel-heading">
+								<h3 class="panel-title">Direction</h3>
+							</div>
+
+							<div class="panel-body">
+								<h2 id="cog">8888</h2>
+								<h2 id="sog">8888</h2>
+							</div>
+						</div>
+					</div>
+					<!-- Optional: clear the XS cols if their content doesn't match in height -->
+
+					<div class="clearfix visible-xs-block"></div>
+
+					<div class="col-xs-6 col-sm-4">
+						<div class="panel panel-primary">
+							<div class="panel-heading">
+								<h3 class="panel-title">Préssion / Température</h3>
+							</div>
+
+							<div class="panel-body">
+								<h2 id="pressure">8888</h2>
+								<h2 id="temp">8888</h2>
+								<p><a href="/graphique">Afficher le graphique</p></a>
+							</div>
+						</div>
+					</div>
+				</div>
+				
+			</div>		
         """
 	
 	return bodyHTML
@@ -198,12 +254,6 @@ def includeJS(affichage):
 		<script type="text/javascript" src="static/jqxdata.js"></script>
 		<script type="text/javascript" src="static/jqxdraw.js"></script>
 		<script type="text/javascript" src="static/jqxchart.core.js"></script>
-		<script type="text/javascript" src="static/jqxchart.rangeselector.js"></script>
-		<script type="text/javascript" src="static/jqwidgets/jqxslider.js"></script>
-		<script type="text/javascript" src="static/jqwidgets/jqxbuttons.js"></script>
-		<script type="text/javascript" src="static/jqwidgets/jqxlistbox.js"></script>
-		<script type="text/javascript" src="static/jqwidgets/jqxscrollbar.js"></script>
-		<script type="text/javascript" src="static/jqwidgets/jqxdropdownlist.js"></script>
 		"""
 		
 	return includeJS
@@ -242,35 +292,12 @@ def codeJS(affichage):
 		codeJS=(
 		"""
 		$(document).ready(function(){
-	
+		
 			setInterval(function() { refreshValues()}, 500); // fixe délai actualisation
-			
-			$('#gaugeContainer').jqxGauge({
-				ranges: [{ startValue: 0, endValue: 3, style: { fill: '#C9C9C9', stroke: '#C9C9C9' }, endWidth: 2, startWidth: 1 },
-				{ startValue: 3, endValue: 6, style: { fill: '#FCF06A', stroke: '#FCF06A' }, endWidth: 4, startWidth: 2 },
-				{ startValue: 6, endValue: 10, style: { fill: '#FCA76A', stroke: '#FCA76A' }, endWidth: 6, startWidth: 4 },
-				{ startValue: 10, endValue: 20, style: { fill: '#FC6A6A', stroke: '#FC6A6A' }, endWidth: 10, startWidth: 6}],
-				ticksMinor: { interval: 1, size: '5%' },
-				ticksMajor: { interval: 2, size: '9%' },
-				caption: { value: 'Speed (Kts)', position: 'bottom', visible: true },
-				value: 0,
-				max:20,
-				colorScheme: 'scheme03',
-				labels: { interval: 2},
-				animationDuration: 1200
-			});
-			
-			$('#gaugeContainerTemp').jqxLinearGauge({
-				max: 45,
-				min: 0,
-				pointer: { size: '5%' },
-				colorScheme: 'scheme02',
-				labels: { position: 'near', interval:5, offset: 3, visible: true },
-				ticksMajor: { size: '10%', interval: 10 },
-				ticksMinor: { size: '5%', interval: 2.5, style: { 'stroke-width': 1, stroke: '#aaaaaa'} },
-
-				value: 0
-			});
+		
+			$('#myModal').on('shown.bs.modal', function () {
+				$('#myInput').focus()
+			})
 
 			// prepare the data
 			var source =
@@ -279,15 +306,19 @@ def codeJS(affichage):
                 datafields: [
                     { name: 'Date' },
                     { name: 'Temp' },
-                    { name: 'Pressure' },
+                    { name: 'Pressure' }
                     ],
                 url: 'data/dataOpenNav.txt'
             };
-            var dataAdapter = new $.jqx.dataAdapter(source, { async: false, autoBind: true, loadError: function (xhr, status, error) { alert('Error loading "' + source.url + '" : ' + error); } });
             
+			var dataAdapter = new $.jqx.dataAdapter(source,
+			{
+				async: false,
+				autoBind: true,
+			});
             // prepare jqxChart settings
             var settings = {
-                title: "Evolution de la pression athmosphérique",
+                title: "Préssion athmosphérique et température",
                 description: "Temps réél",
                 enableAnimations: true,
                 animationDuration: 1000,
@@ -296,45 +327,54 @@ def codeJS(affichage):
                 padding: { left: 5, top: 5, right: 5, bottom: 5 },
                 titlePadding: { left: 0, top: 0, right: 0, bottom: 10 },
                 source: dataAdapter,
-                xAxis:
-                    {
-                        dataField: 'Date',
-                        type: 'date',
-                        baseUnit: 'minute',
-                        unitInterval: 10,
-                        formatFunction: function (value) {
-                            return $.jqx.dataFormat.formatdate(value, "hh:mm", 'en-us');
-                        },
-                        gridLinesInterval: 1,
-                        minValue: '00:00',
-						maxValue: '23:59',
-                        valuesOnTicks: true,
-                        textRotationAngle: -45,
-                        textOffset: { x: -17, y: 0 }
-                    },
-                colorScheme: 'scheme03',
-                seriesGroups:
-                    [
-                        {
-                            type: 'line',
-                            columnsGapPercent: 50,
-                            alignEndPointsWithIntervals: true,
-                            valueAxis:
-                            {
-                                minValue: 800,
-                                maxValue: 1200,
-                                displayValueAxis: true,
-                                description: 'en hPa'
-                            },
-                            series: [
-                                    { dataField: 'Pressure', displayText: 'Préssion', opacity: 1, lineWidth: 2, symbolType: 'circle', fillColorSymbolSelected: 'white', symbolSize: 4 },
-                                    { dataField: 'Temp', displayText: 'Température', opacity: 1, lineWidth: 2, symbolType: 'circle', fillColorSymbolSelected: 'white', symbolSize: 4 }
-                                ]
-                        }
-                    ]
-            };
+			   enableAnimations: true,
+			   xAxis: {
+				   dataField: 'Date',
+				   description: '',
+				   baseUnit: 'houre',
+				   unitInterval: 1,
+				   showGridLines: true,
+				   showTickMarks: true,
+				   minValue: '00:00',
+				   maxValue: '23:59',
+				   valuesOnTicks: true,
+				   textRotationAngle: -45,
+				   textOffset: {
+					   x: -17,
+					   y: 0
+				   }
+			   },
+			   
+			   seriesGroups: [{
+					type: 'stepline',
+					valueAxis: {
+						minValue: 920,
+						maxValue: 1050,
+						displayValueAxis: true,
+						unitInterval: 10,
+						description: 'en hPa',
+						horizontalTextAlignment: 'right'
+					},
+					series: [{ emptyPointsDisplay: 'skip',	dataField: 'Pressure', displayText: 'Presure'}]
+					},{
+					
+					type: 'spline',
+					valueAxis:
+					{
+						position : 'right',
+						minValue:-5,
+						maxValue: 40,
+						unitInterval: 5,
+						displayValueAxis: true,
+						description: '°C',
+						showGridLines : false,
+					},
+					series: [{ dataField: 'Temp', displayText: 'Temperature' }]
+					}]
+		   };
             // create the chart
             $('#chartContainer').jqxChart(settings);
+           
        		
 		}); // fin function + fin ready + fin $ 
 
@@ -385,9 +425,6 @@ function manageReponseAjaxServeur(dataIn){
 	$("#cog").html(values[5]);
 	$("#service").html(values[6]);
 	
-	$('#gaugeContainer').jqxGauge('value', values[2]);
-	$('#gaugeContainerTemp').jqxLinearGauge('value', values[0]);
-
 	//var timestamp = new Date();
 	//timestamp.setSeconds(timestamp.getSeconds());
 	//timestamp.setMilliseconds(0);
@@ -430,9 +467,9 @@ def reponseAJAX():
 		lonhemis = hemis[1].strip("(')")
 		
 		reponseAjax=(
-			str('{0:0.1f}'.format(sensor.read_temperature()))+","
+			str('{0:0.1f} °C'.format(sensor.read_temperature()))+","
 			+str('{0} hPa'.format(sensor.read_pressure()/100))+","
-			+str('{0}'.format(speed))+","
+			+str('{0} Kts'.format(speed))+","
 			+str(latdegMin+" "+latSec+" "+lathemis)+","
 			+str(londegMin+" "+lonSec+" "+lonhemis)+","
 			+str('{0}°'.format(cog))+","
@@ -445,7 +482,7 @@ def reponseAJAX():
 		print "Problème de communicaton avec le GPS\nVérifier la connectique ou le service GPSD \"service gpsd restart\""
 		
 		reponseAjax=(
-			str('{0:0.1f}'.format(sensor.read_temperature()))+","
+			str('{0:0.1f} °C'.format(sensor.read_temperature()))+","
 			+str('{0} hPa'.format(sensor.read_pressure()/100))+","
 			+str("NOK")+","
 			+str("NOK")+","

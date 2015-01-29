@@ -33,9 +33,9 @@ def main():
 		sensor = BMP085.BMP085()
 		sensor = BMP085.BMP085(mode=BMP085.BMP085_ULTRAHIGHRES)
 		
-		fileData.write(str(time.strftime('%H:%M',time.localtime()))+';')
-		fileData.write(str(sensor.read_temperature())+';')
-		fileData.write(str(sensor.read_pressure()/100)+';')
+		fileData.write(str(time.strftime('%H:%M',time.localtime()))+',')
+		fileData.write(str(sensor.read_temperature())+',')
+		fileData.write(str(sensor.read_pressure()/100))
 		fileData.write('\n')
 	except:
 		print "Le fichier", dataOpenNav, "est introuvable"
