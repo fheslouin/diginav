@@ -1,5 +1,6 @@
 # DigiNav
 Dashboard for sailing boat 
+
 Retrouvez le projet sur http://wiki.lab-rev.org
 
 Le projet à pour objectif d'utiliser un micro ordinateur performant et à bas coût afin de réaliser une centrale de navigation flexible et adaptable suivant les cas d'usages.
