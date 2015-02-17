@@ -6,7 +6,7 @@
 #from pyduino_pcduino import * # importe les fonctions Arduino pour Python
 
 #import random
-import Adafruit_BMP.BMP085 as BMP085
+import BMP085 as BMP085
 from LatLon import LatLon
 from bottle import route, run, template, static_file # importe classes utile du module Bottle
 
@@ -348,7 +348,7 @@ def codeJS(affichage):
 			   seriesGroups: [{
 					type: 'stepline',
 					valueAxis: {
-						minValue: 920,
+						minValue: 930,
 						maxValue: 1050,
 						displayValueAxis: true,
 						unitInterval: 10,
@@ -445,13 +445,13 @@ function manageReponseAjaxServeur(dataIn){
 
 #def reponseAJAX(paramIn):
 def reponseAJAX():
-	sensor = BMP085.BMP085()
-	sensor = BMP085.BMP085(mode=BMP085.BMP085_ULTRAHIGHRES)
 	
 	global gpsd
 
 	# la reponse
 	try:
+		sensor = BMP085.BMP085(mode=BMP085.BMP085_ULTRAHIGHRES)
+		pressure = ((sensor.read_pressure() / pow((1.0 - ( 60 / 44330.0 )), 5.255))/100)
 		gps = LatLon(gpsd.fix.latitude, gpsd.fix.longitude)
 		degMin = gps.to_string('d% %m%')
 		sec = gps.to_string('%S%')
@@ -468,7 +468,7 @@ def reponseAJAX():
 		
 		reponseAjax=(
 			str('{0:0.1f} °C'.format(sensor.read_temperature()))+","
-			+str('{0} hPa'.format(sensor.read_pressure()/100))+","
+			+str('{0:0.1f} hPa'.format(pressure))+","
 			+str('{0} Kts'.format(speed))+","
 			+str(latdegMin+" "+latSec+" "+lathemis)+","
 			+str(londegMin+" "+lonSec+" "+lonhemis)+","
@@ -477,19 +477,19 @@ def reponseAJAX():
 		)  
 		return reponseAjax
 		
-	except (ValueError, TypeError):
+	except (ValueError, TypeError, IOError, UnboundLocalError):
 		
 		print "Problème de communicaton avec le GPS\nVérifier la connectique ou le service GPSD \"service gpsd restart\""
 		
 		reponseAjax=(
 			str('{0:0.1f} °C'.format(sensor.read_temperature()))+","
-			+str('{0} hPa'.format(sensor.read_pressure()/100))+","
-			+str("NOK")+","
-			+str("NOK")+","
-			+str("NOK")+","
-			+str("NOK")+","
-			+str('Service NON OK !! Vérifiez la connexion au GPS')
-		)  
+			+str('{0:0.1f} hPa'.format(pressure))+","
+			+str("NOK,")
+			+str("NOK,")
+			+str("NOK,")
+			+str("NOK,")
+			+str('Service NON OK !! Vérifiez la connexion GPS ou du Baromètre')
+		)
 		return reponseAjax
 			
 

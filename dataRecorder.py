@@ -21,7 +21,7 @@
 #  MA 02110-1301, USA.
 #  
 #  
-import Adafruit_BMP.BMP085 as BMP085
+import BMP085 as BMP085
 import time
 
 dataOpenNav = "/home/olimex/diginav/data/dataOpenNav.txt"
@@ -30,12 +30,12 @@ def main():
 	fileData = open(dataOpenNav,'a')
 	
 	try:
-		sensor = BMP085.BMP085()
 		sensor = BMP085.BMP085(mode=BMP085.BMP085_ULTRAHIGHRES)
+		pressure = ((sensor.read_pressure() / pow((1.0 - ( 60 / 44330.0 )), 5.255))/100)
 		
 		fileData.write(str(time.strftime('%H:%M',time.localtime()))+',')
 		fileData.write(str(sensor.read_temperature())+',')
-		fileData.write(str(sensor.read_pressure()/100))
+		fileData.write(str('{0:0.1f}'.format(pressure))
 		fileData.write('\n')
 	except:
 		print "Le fichier", dataOpenNav, "est introuvable"
