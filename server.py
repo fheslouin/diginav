@@ -332,7 +332,7 @@ def codeJS(affichage):
 				   dataField: 'Date',
 				   description: '',
 				   baseUnit: 'houre',
-				   unitInterval: 1,
+				   unitInterval: 3,
 				   showGridLines: true,
 				   showTickMarks: true,
 				   minValue: '00:00',

@@ -24,6 +24,7 @@
 import BMP085 as BMP085
 import time
 
+altitude = 60
 dataOpenNav = "/home/olimex/diginav/data/dataOpenNav.txt"
 
 def main():
@@ -31,11 +32,11 @@ def main():
 	
 	try:
 		sensor = BMP085.BMP085(mode=BMP085.BMP085_ULTRAHIGHRES)
-		pressure = ((sensor.read_pressure() / pow((1.0 - ( 60 / 44330.0 )), 5.255))/100)
+		pressure = ((sensor.read_pressure() / pow((1.0 - ( altitude / 44330.0 )), 5.255))/100)
 		
 		fileData.write(str(time.strftime('%H:%M',time.localtime()))+',')
 		fileData.write(str(sensor.read_temperature())+',')
-		fileData.write(str('{0:0.1f}'.format(pressure))
+		fileData.write(str('{0:0.1f}'.format(pressure)))
 		fileData.write('\n')
 	except:
 		print "Le fichier", dataOpenNav, "est introuvable"
