@@ -24,7 +24,6 @@
 import BMP085 as BMP085
 import time
 
-altitude = 20
 dataDigiNav = "/home/olimex/diginav/data/dataDigiNav.txt"
 
 def main():
@@ -32,7 +31,7 @@ def main():
 	
 	try:
 		sensor = BMP085.BMP085(mode=BMP085.BMP085_ULTRAHIGHRES)
-                pressure = (sensor.read_sealevel_pressure() / 100)
+		pressure = (sensor.read_sealevel_pressure() / 100)
 		
 		fileData.write(str(time.strftime('%H:%M',time.localtime()))+',')
 		fileData.write(str(sensor.read_temperature())+',')

@@ -14,11 +14,11 @@ from gps import *
 from time import *
 from serial import *
 from threading import Thread
+from templateHtml import *
 
 gpsd = None #seting the global variable
 ampd = None
 last_received = ''
-amp = '0'
 dataDigiNav = '/home/olimex/diginav/data/dataAmp.txt'
 
 class GpsPoller(threading.Thread):
@@ -35,24 +35,26 @@ class GpsPoller(threading.Thread):
 			gpsd.next()
 
 def receiving(ser):
-    global last_received
-    global amp
-    buffer = ''
+	global last_received
+	buffer = ''
 
-    while True:
-        buffer += ser.read(1024)
-        if '\n' in buffer:
-            last_received, buffer = buffer.split('\n')[-2:]
-        amp = last_received
-
+	try:
+		while True:
+			buffer += ser.read(1024)
+			if '\n' in buffer:
+				last_received, buffer = buffer.split('\n')[-2:]
+	except:
+		last_received = '0'
+		ser.close()
+		
 def dataLogger():
 	fileData = open(dataDigiNav,'a')
 	
 	try:
-		global amp
+		global last_received
 			
 		fileData.write(str(time.strftime('%H:%M:%S',time.localtime()))+',')
-		fileData.write(str('{0}'.format(amp)))
+		fileData.write(str('{0}'.format(last_received)))
 		fileData.write('\n')
 		
 		threading.Timer(300, dataLogger).start()
@@ -129,24 +131,25 @@ def setup():
 	
 	global gpsp
 	
-#	ser = Serial(
-#		port='/dev/ttyACM0',
-#		baudrate=9600,
-#		bytesize=EIGHTBITS,
-#		parity=PARITY_NONE,
-#		stopbits=STOPBITS_ONE,
-#		timeout=0.1,
-#		xonxoff=0,
-#		rtscts=0,
-#		interCharTimeout=None
-#	)
+	ser = Serial(
+		port='/dev/ttyACM0',
+		baudrate=9600,
+		bytesize=EIGHTBITS,
+		parity=PARITY_NONE,
+		stopbits=STOPBITS_ONE,
+		timeout=0.1,
+		xonxoff=0,
+		rtscts=0,
+		interCharTimeout=None
+	)
 	
-	#Thread(target=receiving, args=(ser,)).start()
+	Thread(target=receiving, args=(ser,)).start()
 	
 	gpsp = GpsPoller() # create the thread
 	gpsp.start() # start it up
 	
-	#dataLogger()
+	dataLogger()
+
 	
 	run(host='0.0.0.0',port=port, server='cherrypy') # bottle lance automatiquement le wsgiserver de cherrypy (multithread)
 	
@@ -192,142 +195,16 @@ def pageInitialeHTMLJS(affichage):
 def bodyHTML(affichage):
 		
 	if affichage == "afficheur":
+		return htmlAfficheur
 		
-		bodyHTML="""<!--<textarea rows="4" cols="50" id="textarea"></textarea><br>-->
-		<table width="100%">
-		<tr>
-		<td align="center">SOG</td>
-		<tr></tr>
-		<td align="center"><h1 id="sog" style="font-size:40pt;">8888</h1></td>
-		<tr></tr>
-		<td align="center">COG</td>
-		<tr></tr>
-		<td align="center"><h1 id="cog" style="font-size:40pt;">8888</h1></td>
-		</tr>
-		<td align="center">Latitude</td>
-		<tr></tr>
-		<td align="center"><h2 id="lat" style="font-size:40pt;">8888</h2></td>
-		</tr>
-		<tr>
-		<td align="center">Longitude</td>
-		<tr></tr>
-		<td align="center"><h2 id="lon" style="font-size:40pt;">8888</h2></td>
-		</table>"""	
 	elif affichage == "graphPressure":
-		
-		bodyHTML="""<p class="text-center">						
-						<div class="alert alert-info">
-							<h1>DigiNav Dashboard</h1>
-						</div>
-					</p>
-						<br />
-					<div align="center">	
-						<div id="chartPressure" style="width:800px; height:300px;"></div>
-					</div>"""
+		return htmlGraphPressure
 					
 	elif affichage == "graphAmp":
+		return htmlGraphAmp
 		
-		bodyHTML="""<p class="text-center">						
-						<div class="alert alert-info">
-							<h1>DigiNav Dashboard</h1>
-						</div>
-					</p>
-						<br />
-					<div align="center">	
-						<div id="chartAmp" style="width:800px; height:300px;"></div>
-					</div>"""
-	else :
-	
-		bodyHTML="""<!--<textarea rows="4" cols="50" id="textarea"></textarea><br>-->
-				<p class="text-center">
-					<div class="alert alert-info">
-						<h1>DigiNav Dashboard</h1>
-					</div>
-				</p>
-
-				<div class="container-fluid">
-				<div class="row">
-					<div class="col-xs-6 col-sm-4">
-						<div class="panel panel-primary">
-							<div class="panel-heading">
-								<h3 class="panel-title">Latidude / Longitude</h3>
-							</div>
-
-							<div class="panel-body">
-								<h2 id="lat">8888</h2>
-
-								<h2 id="lon">8888</h2>
-							</div>
-						</div>
-					</div>
-
-					<div class="col-xs-6 col-sm-4">
-						<div class="panel panel-primary">
-							<div class="panel-heading">
-								<h3 class="panel-title">Direction</h3>
-							</div>
-
-							<div class="panel-body">
-								<h2 id="cog">8888</h2>
-								<h2 id="sog">8888</h2>
-							</div>
-						</div>
-					</div>
-					<!-- Optional: clear the XS cols if their content doesn't match in height -->
-
-					<div class="clearfix visible-xs-block"></div>
-
-					<div class="col-xs-6 col-sm-4">
-						<div class="panel panel-primary">
-							<div class="panel-heading">
-								<h3 class="panel-title">Préssion / Température</h3>
-							</div>
-
-							<div class="panel-body">
-								<h2 id="pressure">8888</h2>
-								<h2 id="temp">8888</h2>
-								<p><a href="/graphPressure">Afficher le graphique</p></a>
-							</div>
-						</div>
-					</div>
-				</div>
-				
-			</div>		
-			
-			<div class="container-fluid">
-				<div class="row">
-					<div class="col-xs-6 col-sm-4">
-						<div class="panel panel-primary">
-							<div class="panel-heading">
-								<h3 class="panel-title">Ampèremètre</h3>
-							</div>
-
-							<div class="panel-body">
-								<h2 id="amp">8888</h2>
-								<p><a href="/graphAmp">Afficher le graphique</p></a>
-							</div>
-						</div>
-					</div>
-
-					<div class="col-xs-6 col-sm-4">
-						<div class="panel panel-primary">
-						
-						</div>
-					</div>
-					<!-- Optional: clear the XS cols if their content doesn't match in height -->
-
-					<div class="clearfix visible-xs-block"></div>
-
-					<div class="col-xs-6 col-sm-4">
-						
-					</div>
-				</div>
-				
-			</div>		
-        """
-	
-	return bodyHTML
-	
+	else:
+		return htmlMainPage
 	
 #------ fonction fournissant les fichiers JS a inclure -----
 def includeJS(affichage):
@@ -369,11 +246,6 @@ def codeJS(affichage):
 		}); // fin function + fin ready + fin $ 
 
 		function refreshValues(){
-
-			//$("#long").html((Math.random()*9999).toFixed(2));
-			//$("#lat").html((Math.random()*9999).toFixed(2));
-			//$("#vit").html((Math.random()*9999).toFixed(2));
-			//$("#prof").html((Math.random()*9999).toFixed(2));
 			
 			$.get("ajax/", manageReponseAjaxServeur); // envoi d'une requete AJAX
 			
@@ -589,17 +461,12 @@ def codeJS(affichage):
 		codeJS=(
 		"""
 		$(document).ready(function(){
-		
+
 			setInterval(function() { refreshValues()}, 500); // fixe délai actualisation
 
 		}); // fin function + fin ready + fin $ 
 
 		function refreshValues(){
-
-			//$("#long").html((Math.random()*9999).toFixed(2));
-			//$("#lat").html((Math.random()*9999).toFixed(2));
-			//$("#vit").html((Math.random()*9999).toFixed(2));
-			//$("#prof").html((Math.random()*9999).toFixed(2));
 			
 			$.get("ajax/", manageReponseAjaxServeur); // envoi d'une requete AJAX
 			
@@ -623,10 +490,6 @@ def manageReponseAjaxServeur():
 
 
 function manageReponseAjaxServeur(dataIn){
-	
-	//dataIn=parseInt(dataIn); 
-	//$("#textarea").append("ajax : "+ dataIn+"\\n"); 
-	//$("#textarea").get(0).setSelectionRange($("#textarea").get(0).selectionEnd-1,$("#textarea").get(0).selectionEnd-1); // se place en derniere ligne -1 pour avant saut de ligne 
 
 	var values=dataIn.split(','); // tableau de valeurs
 
@@ -638,13 +501,6 @@ function manageReponseAjaxServeur(dataIn){
 	$("#cog").html(values[5]);
 	$("#service").html(values[6]);
 	$("#amp").html(values[7]);
-	
-	//var timestamp = new Date();
-	//timestamp.setSeconds(timestamp.getSeconds());
-	//timestamp.setMilliseconds(0);
-	//data.push({ Date: timestamp, value: values[1] });
-	//$('#chartPressure').jqxChart('update');
-
 
 	
 } // fin fonction de gestion de la reponse AJAX 
@@ -666,7 +522,7 @@ def reponseAJAX():
 	# la reponse
 	try:
 		sensor = BMP085.BMP085(mode=BMP085.BMP085_ULTRAHIGHRES)
-                pressure = (sensor.read_sealevel_pressure() / 100)
+		pressure = (sensor.read_sealevel_pressure() / 100)
 		gps = LatLon(gpsd.fix.latitude, gpsd.fix.longitude)
 		degMin = gps.to_string('d% %m%')
 		sec = gps.to_string('%S%')
@@ -689,13 +545,11 @@ def reponseAJAX():
 			+str(londegMin+" "+lonSec+" "+lonhemis)+","
 			+str('{0}°'.format(cog))+","
 			+str('Service OK')+","
-			+str(last_received)
+			+str('{0} Ah'.format(last_received))
 		)  
 		return reponseAjax
 		
 	except (ValueError, TypeError, IOError, UnboundLocalError):
-		
-		print "Problème de communicaton avec le GPS\nVérifier la connectique ou le service GPSD \"service gpsd restart\""
 		
 		reponseAjax=(
 			str('{0:0.1f} °C'.format(sensor.read_temperature()))+","
@@ -704,7 +558,8 @@ def reponseAJAX():
 			+str("NOK,")
 			+str("NOK,")
 			+str("NOK,")
-			+str('Service NON OK !! Vérifiez la connexion GPS ou du Baromètre')
+			+str('Service NON OK !! Vérifiez la connexion GPS ou du Baromètre')+","
+			+str('{0} Ah'.format(last_received))
 		)
 		return reponseAjax
 			
