@@ -207,7 +207,7 @@ class BMP085(object):
 		self._logger.debug('Altitude {0} m'.format(altitude))
 		return altitude
 
-	def read_sealevel_pressure(self, altitude_m=60):
+	def read_sealevel_pressure(self, altitude_m=0):
 		"""Calculates the pressure at sealevel when given a known altitude in
 		meters. Returns a value in Pascals."""
 		pressure = float(self.read_pressure())

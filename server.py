@@ -15,10 +15,11 @@ from time import *
 from serial import *
 from threading import Thread
 from templateHtml import *
+from javaScriptCode import *
 
 gpsd = None #seting the global variable
 ampd = None
-last_received = ''
+dataAmp = ''
 dataDigiNav = '/home/olimex/diginav/data/dataAmp.txt'
 
 class GpsPoller(threading.Thread):
@@ -34,37 +35,38 @@ class GpsPoller(threading.Thread):
 		while gpsp.running:
 			gpsd.next()
 
-def receiving(ser):
-	global last_received
+def receivingDataAmp(ser):
+	global dataAmp
 	buffer = ''
 
 	try:
 		while True:
 			buffer += ser.read(1024)
 			if '\n' in buffer:
-				last_received, buffer = buffer.split('\n')[-2:]
+				dataAmp, buffer = buffer.split('\n')[-2:]
 	except:
-		last_received = '0'
+		dataAmp = '0'
 		ser.close()
 		
 def dataLogger():
-	fileData = open(dataDigiNav,'a')
+	global dataAmp
 	
-	try:
-		global last_received
+	if dataAmp == '0':
+		fileData = open(dataDigiNav,'a')
+		
+		try:
+			fileData.write(str(time.strftime('%H:%M',time.localtime()))+',')
+			fileData.write(str('{0}'.format(dataAmp)))
+			fileData.write('\n')
 			
-		fileData.write(str(time.strftime('%H:%M:%S',time.localtime()))+',')
-		fileData.write(str('{0}'.format(last_received)))
-		fileData.write('\n')
+			threading.Timer(300, dataLogger).start()
+			
+		except:
+			print "Le fichier", dataDigiNav, "est introuvable"
+		finally:
+			fileData.close
 		
-		threading.Timer(300, dataLogger).start()
-		
-	except:
-		print "Le fichier", dataDigiNav, "est introuvable"
-	finally:
-		fileData.close
-	
-	return 0
+		return 0
 
 # dependances : 
 # sudo apt-get install python-bottle
@@ -100,17 +102,9 @@ def bottleHtmlInitial():
 def bottleHtmlInitial():
 	return pageInitialeHTMLJS("graphAmp")
 
-#--- gestion requetes AJAX --- 
-"""
-@route('/ajax/<param>') # la meme chaine a mettre dans code JS initial requete AJAX
-def bottleReponseAjax(param):
-	return reponseAJAX(param)
-"""
-
 @route('/ajax/') # la meme chaine a mettre dans code JS initial requete AJAX
 def bottleReponseAjax():
 	return reponseAJAX()
-
 
 #-- route pour gestion fichier statique pour libairie js locale 
 @route('/static/<filename:path>')
@@ -126,30 +120,29 @@ def send_static(filename):
 #--- setup ---
 def setup():
 	
-	#print "dir="+os.getcwd()+"/"+'static/' # debug
-	#print "dir="+currentdir()+'static/' # debug
-	
 	global gpsp
 	
-	ser = Serial(
-		port='/dev/ttyACM0',
-		baudrate=9600,
-		bytesize=EIGHTBITS,
-		parity=PARITY_NONE,
-		stopbits=STOPBITS_ONE,
-		timeout=0.1,
-		xonxoff=0,
-		rtscts=0,
-		interCharTimeout=None
-	)
-	
-	Thread(target=receiving, args=(ser,)).start()
+	try:
+		ser = Serial(
+			port='/dev/ttyACM0',
+			baudrate=9600,
+			bytesize=EIGHTBITS,
+			parity=PARITY_NONE,
+			stopbits=STOPBITS_ONE,
+			timeout=0.1,
+			xonxoff=0,
+			rtscts=0,
+			interCharTimeout=None
+		)
+		
+		Thread(target=receivingDataAmp, args=(ser,)).start()
+		dataLogger()
+	except:
+		global dataAmp
+		dataAmp = 'No Data'
 	
 	gpsp = GpsPoller() # create the thread
 	gpsp.start() # start it up
-	
-	dataLogger()
-
 	
 	run(host='0.0.0.0',port=port, server='cherrypy') # bottle lance automatiquement le wsgiserver de cherrypy (multithread)
 	
@@ -210,304 +203,28 @@ def bodyHTML(affichage):
 def includeJS(affichage):
 	
 	if affichage == "afficheur":
-		
-		includeJS="""<script type="text/javascript" src="static/jquery-1.11.1.min.js"></script>"""	
-		
+		return jsIncDisplay
 	else:
-		
-		includeJS="""
-		<link rel="stylesheet" href="static/jqx.base.css" type="text/css" />
-		<link rel="stylesheet" href="static/opennav.css" type="text/css" />
-		<link rel="stylesheet" href="static/bootstrap.min.css" type="text/css" />
-		<script type="text/javascript" src="static/jquery-1.11.1.min.js"></script>
-		<script type="text/javascript" src="static/bootstrap.min.js"></script>
-		<script type="text/javascript" src="static/jqxcore.js"></script>
-		<script type="text/javascript" src="static/jqxchart.js"></script>
-		<script type="text/javascript" src="static/jqxgauge.js"></script>
-		<script type="text/javascript" src="static/jqxdata.js"></script>
-		<script type="text/javascript" src="static/jqxdraw.js"></script>
-		<script type="text/javascript" src="static/jqxchart.core.js"></script>
-		"""
-		
-	return includeJS
-
-	
+		return jsIncMain
+		 
 #------ fonction fournissant le code Javascript / jQuery de la page HTML----
 def codeJS(affichage):
 	
 	if affichage == "afficheur":
-		
-		codeJS=(
-		"""
-		$(document).ready(function(){
-		
-			setInterval(function() { refreshValues()}, 500); // fixe délai actualisation
-
-		}); // fin function + fin ready + fin $ 
-
-		function refreshValues(){
-			
-			$.get("ajax/", manageReponseAjaxServeur); // envoi d'une requete AJAX
-			
-		} // fin refresh value
-		"""
-		+
-		manageReponseAjaxServeur()
-		+
-		"""
-		""")
+		return jsCodeDisplay
 		
 	elif affichage == "graphPressure":		
-		codeJS=(
-		"""
-		$(document).ready(function(){
-		
-			setInterval(function() { refreshValues()}, 500); // fixe délai actualisation
-		
-			$('#myModal').on('shown.bs.modal', function () {
-				$('#myInput').focus()
-			})
-
-			// Graph for pressure
-			var source =
-            {
-                datatype: "csv",
-                datafields: [
-                    { name: 'Date' },
-                    { name: 'Temp' },
-                    { name: 'Pressure' }
-                    ],
-                url: 'data/dataDigiNav.txt'
-            };
-            
-			var dataAdapter = new $.jqx.dataAdapter(source,
-			{
-				async: false,
-				autoBind: true,
-			});
-            // prepare jqxChart settings
-            var settings = {
-                title: "Préssion athmosphérique et température",
-                description: "Temps réél",
-                enableAnimations: true,
-                animationDuration: 1000,
-                enableAxisTextAnimation: true,
-                showLegend: true,
-                padding: { left: 5, top: 5, right: 5, bottom: 5 },
-                titlePadding: { left: 0, top: 0, right: 0, bottom: 10 },
-                source: dataAdapter,
-			   enableAnimations: true,
-			   xAxis: {
-				   dataField: 'Date',
-				   description: '',
-				   baseUnit: 'houre',
-				   unitInterval: 3,
-				   showGridLines: true,
-				   showTickMarks: true,
-				   minValue: '00:00',
-				   maxValue: '23:59',
-				   valuesOnTicks: true,
-				   textRotationAngle: -45,
-				   textOffset: {
-					   x: -17,
-					   y: 0
-				   }
-			   },
-			   
-			   seriesGroups: [{
-					type: 'stepline',
-					valueAxis: {
-						minValue: 930,
-						maxValue: 1050,
-						displayValueAxis: true,
-						unitInterval: 10,
-						description: 'en hPa',
-						horizontalTextAlignment: 'right'
-					},
-					series: [{ emptyPointsDisplay: 'skip',	dataField: 'Pressure', displayText: 'Presure'}]
-					},{
-					
-					type: 'spline',
-					valueAxis:
-					{
-						position : 'right',
-						minValue:-5,
-						maxValue: 40,
-						unitInterval: 5,
-						displayValueAxis: true,
-						description: '°C',
-						showGridLines : false,
-					},
-					series: [{ dataField: 'Temp', displayText: 'Temperature' }]
-					}]
-		   };
-            // create the chart
-            $('#chartPressure').jqxChart(settings);
-       
-		}); // fin function + fin ready + fin $ 
-
-
-
-		function refreshValues(){
-
-			//$("#long").html((Math.random()*9999).toFixed(2));
-			//$("#lat").html((Math.random()*9999).toFixed(2));
-			//$("#vit").html((Math.random()*9999).toFixed(2));
-			//$("#prof").html((Math.random()*9999).toFixed(2));
-			
-			$.get("ajax/", manageReponseAjaxServeur); // envoi d'une requete AJAX
-			
-		} // fin refresh value
-		"""
-		+
-
-		manageReponseAjaxServeur()
-		+
-		"""
-		""")
+		return jsCodePressure
 		
 	elif affichage == "graphAmp":		
-		codeJS=(
-		"""
-		$(document).ready(function(){
-		
-			setInterval(function() { refreshValues()}, 500); // fixe délai actualisation
-
-        // Graph for amp
-			var source =
-            {
-                datatype: "csv",
-                datafields: [
-                    { name: 'Date' },
-                    { name: 'Amp' },
-                    ],
-                url: 'data/dataAmp.txt'
-            };
-            
-			var dataAdapter = new $.jqx.dataAdapter(source,
-			{
-				async: false,
-				autoBind: true,
-			});
-            // prepare jqxChart settings
-            var settings = {
-                title: "Evolution de la consommation ampérmètrique",
-                description: "Temps réél",
-                enableAnimations: true,
-                animationDuration: 1000,
-                enableAxisTextAnimation: true,
-                showLegend: true,
-                padding: { left: 5, top: 5, right: 5, bottom: 5 },
-                titlePadding: { left: 0, top: 0, right: 0, bottom: 10 },
-                source: dataAdapter,
-			   enableAnimations: true,
-			   xAxis: {
-				   dataField: 'Date',
-				   description: '',
-				   baseUnit: 'minute',
-				   unitInterval: 1,
-				   showGridLines: true,
-				   showTickMarks: true,
-				   minValue: '00:00',
-				   maxValue: '23:59',
-				   valuesOnTicks: true,
-				   textRotationAngle: -45,
-				   textOffset: {
-					   x: -17,
-					   y: 0
-				   }
-			   },
-			   
-			   seriesGroups: [{
-					type: 'stepline',
-					valueAxis: {
-						minValue: -25,
-						maxValue: 25,
-						displayValueAxis: true,
-						unitInterval: 5,
-						description: 'en Ah',
-						horizontalTextAlignment: 'right'
-					},
-					series: [{ emptyPointsDisplay: 'skip', dataField: 'Amp', displayText: 'Ah'}]
-					}]
-		   };
-            // create the chart
-            $('#chartAmp').jqxChart(settings);
-           
-       		
-		}); // fin function + fin ready + fin $ 
-
-
-
-		function refreshValues(){
-
-			//$("#long").html((Math.random()*9999).toFixed(2));
-			//$("#lat").html((Math.random()*9999).toFixed(2));
-			//$("#vit").html((Math.random()*9999).toFixed(2));
-			//$("#prof").html((Math.random()*9999).toFixed(2));
-			
-			$.get("ajax/", manageReponseAjaxServeur); // envoi d'une requete AJAX
-			
-		} // fin refresh value
-		"""
-		+
-
-		manageReponseAjaxServeur()
-		+
-		"""
-		""")
+		return jsCodeAmp
 		
 	else:
-		codeJS=(
-		"""
-		$(document).ready(function(){
-
-			setInterval(function() { refreshValues()}, 500); // fixe délai actualisation
-
-		}); // fin function + fin ready + fin $ 
-
-		function refreshValues(){
-			
-			$.get("ajax/", manageReponseAjaxServeur); // envoi d'une requete AJAX
-			
-		} // fin refresh value
-		"""
-		+
-		manageReponseAjaxServeur()
-		+
-		"""
-		""")
-	
-	return codeJS
+		return jsCodeMain
 
 #--- fin du code Javascript / jQuery  ---
 
-#========== fonction de gestion de la reponse du serveur aux requetes AJAX =========
-def manageReponseAjaxServeur():
-	manageReponseAjaxServeur=(
-"""
-//-- fonction de gestion de la réponse AJAX -- 
 
-
-function manageReponseAjaxServeur(dataIn){
-
-	var values=dataIn.split(','); // tableau de valeurs
-
-	$("#temp").html(values[0]);
-	$("#pressure").html(values[1]);
-	$("#sog").html(values[2]);
-	$("#lat").html(values[3]);
-	$("#lon").html(values[4]);
-	$("#cog").html(values[5]);
-	$("#service").html(values[6]);
-	$("#amp").html(values[7]);
-
-	
-} // fin fonction de gestion de la reponse AJAX 
-
-""")
-	
-	return manageReponseAjaxServeur 
 
 #===================== Envoi Reponse AJAX ==================
 
@@ -517,19 +234,22 @@ function manageReponseAjaxServeur(dataIn){
 def reponseAJAX():
 	
 	global gpsd
-	global last_received
+	global dataAmp
 
-	# la reponse
 	try:
 		sensor = BMP085.BMP085(mode=BMP085.BMP085_ULTRAHIGHRES)
-		pressure = (sensor.read_sealevel_pressure() / 100)
+		pressure = '{0:0.1f} hPa'.format(sensor.read_sealevel_pressure() / 100)
+		temperature = '{0:0.1f} °C'.format(sensor.read_temperature())
+		
+	except (ValueError, TypeError, IOError, UnboundLocalError):
+		pressure = "No Data"
+		temperature = "No Data"
+		
+	try:
 		gps = LatLon(gpsd.fix.latitude, gpsd.fix.longitude)
 		degMin = gps.to_string('d% %m%')
 		sec = gps.to_string('%S%')
-		hemis = gps.to_string('%H')
-		speed = gpsd.fix.speed
-		cog = gpsd.fix.track
-		
+		hemis = gps.to_string('%H')		
 		latdegMin = degMin[0].strip("-(')")
 		londegMin = degMin[1].strip("-(')")	
 		latSec = '{0:0.3f}'.format(float(sec[0].strip("(')")))
@@ -537,32 +257,36 @@ def reponseAJAX():
 		lathemis = hemis[0].strip("(')")
 		lonhemis = hemis[1].strip("(')")
 		
-		reponseAjax=(
-			str('{0:0.1f} °C'.format(sensor.read_temperature()))+","
-			+str('{0:0.1f} hPa'.format(pressure))+","
-			+str('{0} Kts'.format(speed))+","
-			+str(latdegMin+" "+latSec+" "+lathemis)+","
-			+str(londegMin+" "+lonSec+" "+lonhemis)+","
-			+str('{0}°'.format(cog))+","
-			+str('Service OK')+","
-			+str('{0} Ah'.format(last_received))
-		)  
-		return reponseAjax
+		latitude = latdegMin+" "+latSec+" "+lathemis
+		longitude = londegMin+" "+lonSec+" "+lonhemis
 		
+		sog = '{0:0.1f} Kts'.format(gpsd.fix.speed * 1.852)
+		cog = '{0:0.1f}°'.format(gpsd.fix.track)
+		
+		if cog == "nan":
+			cog = ""
+
 	except (ValueError, TypeError, IOError, UnboundLocalError):
+		sog = "No Data"
+		latitude = "No Data"
+		longitude = "No Data"
+		cog = "No Data"
 		
-		reponseAjax=(
-			str('{0:0.1f} °C'.format(sensor.read_temperature()))+","
-			+str('{0:0.1f} hPa'.format(pressure))+","
-			+str("NOK,")
-			+str("NOK,")
-			+str("NOK,")
-			+str("NOK,")
-			+str('Service NON OK !! Vérifiez la connexion GPS ou du Baromètre')+","
-			+str('{0} Ah'.format(last_received))
-		)
-		return reponseAjax
-			
+	if dataAmp == "0":
+		amp = "No Data"
+	else:
+		amp = '{0} Ah'.format(dataAmp)
+		
+	reponseAjax=(
+	str(temperature)+","
+	+str(pressure)+","
+	+str(sog)+","
+	+str(latitude)+","
+	+str(longitude)+","
+	+str(cog)+","
+	+str(amp)
+	)  
+	return reponseAjax
 
 #--- obligatoire pour lancement du code -- 
 if __name__=="__main__": # pour rendre le code executable 

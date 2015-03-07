@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: iso-8859-15 -
+
 htmlMainPage="""<!--<textarea rows="4" cols="50" id="textarea"></textarea><br>-->
 				<p class="text-center">
 					<div class="alert alert-info">
@@ -24,7 +27,7 @@ htmlMainPage="""<!--<textarea rows="4" cols="50" id="textarea"></textarea><br>--
 					<div class="col-xs-6 col-sm-4">
 						<div class="panel panel-primary">
 							<div class="panel-heading">
-								<h3 class="panel-title">Direction</h3>
+								<h3 class="panel-title">Direction & Speed</h3>
 							</div>
 
 							<div class="panel-body">
@@ -40,46 +43,28 @@ htmlMainPage="""<!--<textarea rows="4" cols="50" id="textarea"></textarea><br>--
 					<div class="col-xs-6 col-sm-4">
 						<div class="panel panel-primary">
 							<div class="panel-heading">
-								<h3 class="panel-title">Pression / Temperature</h3>
+								<h3 class="panel-title">Pressure / Temperature</h3>
 							</div>
 
 							<div class="panel-body">
 								<h2 id="pressure">8888</h2>
 								<h2 id="temp">8888</h2>
-								<p><a href="/graphPressure">Afficher le graphique</p></a>
+								<p><a href="/graphPressure">Show graph</p></a>
 							</div>
 						</div>
 					</div>
-				</div>
-				
-			</div>		
-			
-			<div class="container-fluid">
-				<div class="row">
+					
 					<div class="col-xs-6 col-sm-4">
 						<div class="panel panel-primary">
 							<div class="panel-heading">
-								<h3 class="panel-title">Amperemetre</h3>
+										<h3 class="panel-title">Amp consumption</h3>
 							</div>
 
 							<div class="panel-body">
 								<h2 id="amp">8888</h2>
-								<p><a href="/graphAmp">Afficher le graphique</p></a>
+								<p><a href="/graphAmp">Show graph</p></a>
 							</div>
 						</div>
-					</div>
-
-					<div class="col-xs-6 col-sm-4">
-						<div class="panel panel-primary">
-						
-						</div>
-					</div>
-					<!-- Optional: clear the XS cols if their content doesn't match in height -->
-
-					<div class="clearfix visible-xs-block"></div>
-
-					<div class="col-xs-6 col-sm-4">
-						
 					</div>
 				</div>
 				

@@ -32,7 +32,10 @@ def main():
 	try:
 		sensor = BMP085.BMP085(mode=BMP085.BMP085_ULTRAHIGHRES)
 		pressure = (sensor.read_sealevel_pressure() / 100)
-		
+		if pressure < (pressure -20) or pressure > (pressure +20):
+			time.sleep (4)
+			pressure = (sensor.read_sealevel_pressure() / 100)
+			
 		fileData.write(str(time.strftime('%H:%M',time.localtime()))+',')
 		fileData.write(str(sensor.read_temperature())+',')
 		fileData.write(str('{0:0.1f}'.format(pressure)))
