@@ -50,23 +50,22 @@ def receivingDataAmp(ser):
 		
 def dataLogger():
 	global dataAmp
+
+	fileData = open(dataDigiNav,'a')
 	
-	if dataAmp == '0':
-		fileData = open(dataDigiNav,'a')
+	try:
+		fileData.write(str(time.strftime('%H:%M',time.localtime()))+',')
+		fileData.write(str('{0}'.format(dataAmp)))
+		fileData.write('\n')
 		
-		try:
-			fileData.write(str(time.strftime('%H:%M',time.localtime()))+',')
-			fileData.write(str('{0}'.format(dataAmp)))
-			fileData.write('\n')
-			
-			threading.Timer(300, dataLogger).start()
-			
-		except:
-			print "Le fichier", dataDigiNav, "est introuvable"
-		finally:
-			fileData.close
+		threading.Timer(300, dataLogger).start()
 		
-		return 0
+	except:
+		print "Le fichier", dataDigiNav, "est introuvable"
+	finally:
+		fileData.close
+	
+	return 0
 
 # dependances : 
 # sudo apt-get install python-bottle
@@ -235,6 +234,7 @@ def reponseAJAX():
 	
 	global gpsd
 	global dataAmp
+	global cogFix
 
 	try:
 		sensor = BMP085.BMP085(mode=BMP085.BMP085_ULTRAHIGHRES)
@@ -260,11 +260,14 @@ def reponseAJAX():
 		latitude = latdegMin+" "+latSec+" "+lathemis
 		longitude = londegMin+" "+lonSec+" "+lonhemis
 		
-		sog = '{0:0.1f} Kts'.format(gpsd.fix.speed * 1.852)
-		cog = '{0:0.1f}°'.format(gpsd.fix.track)
+		if gpsd.fix.track != "nan":
+			cogFix = gpsd.fix.track
+			cog = cogFix
+		else:
+			cog = cogFix
 		
-		if cog == "nan":
-			cog = ""
+		sog = '{0:0.1f} Kts'.format(gpsd.fix.speed * 1.852)
+		cog = '{0:0.1f}°'.format(cog)
 
 	except (ValueError, TypeError, IOError, UnboundLocalError):
 		sog = "No Data"
