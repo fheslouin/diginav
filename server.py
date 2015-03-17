@@ -19,9 +19,13 @@ from javaScriptCode import *
 
 gpsd = None #seting the global variable
 ampd = None
-dataAmp = ''
-dataDigiNav = '/home/olimex/diginav/data/dataAmp.txt'
+dataAmp = '0'
+dataPressure = '0'
+dataTemperature = '0'
+FileDataAmp = '/home/olimex/diginav/data/dataAmp.txt'
+FileDataPressure = '/home/olimex/diginav/data/dataPressure.txt'
 
+#----GPS data
 class GpsPoller(threading.Thread):
 	def __init__(self):
 		threading.Thread.__init__(self)
@@ -35,6 +39,7 @@ class GpsPoller(threading.Thread):
 		while gpsp.running:
 			gpsd.next()
 
+#----Get data from amp sensor
 def receivingDataAmp(ser):
 	global dataAmp
 	buffer = ''
@@ -48,22 +53,56 @@ def receivingDataAmp(ser):
 		dataAmp = '0'
 		ser.close()
 		
-def dataLogger():
+def dataLoggerAmp():
 	global dataAmp
 
-	fileData = open(dataDigiNav,'a')
+	fileAmp = open(FileDataAmp,'a')
 	
 	try:
-		fileData.write(str(time.strftime('%H:%M',time.localtime()))+',')
-		fileData.write(str('{0}'.format(dataAmp)))
-		fileData.write('\n')
+		fileAmp.write(str(time.strftime('%H:%M',time.localtime()))+',')
+		fileAmp.write(str('{0}'.format(dataAmp)))
+		fileAmp.write('\n')
 		
-		threading.Timer(300, dataLogger).start()
+		threading.Timer(300, dataLoggerAmp).start()
 		
 	except:
-		print "Le fichier", dataDigiNav, "est introuvable"
+		print "Le fichier", FileDataAmp, "est introuvable"
 	finally:
-		fileData.close
+		fileAmp.close
+	
+	return 0
+
+#----Get data from pressure sensor
+def receivingDataPressure(sensor):
+	global dataPressure
+	global dataTemperature
+
+	try:
+		while True:
+			dataPressure = sensor.read_sealevel_pressure() / 100
+			dataTemperature = sensor.read_temperature()
+	except:
+		dataPressure = '0'
+		dataTemperature = '0'
+	
+def dataLoggerPressure():
+	global dataPressure
+	global dataTemperature
+
+	filePressure = open(FileDataPressure,'a')
+	
+	try:		
+		filePressure.write(str(time.strftime('%H:%M',time.localtime()))+',')
+		filePressure.write(str(dataTemperature)+',')
+		filePressure.write(str(dataPressure))
+		filePressure.write('\n')
+
+		threading.Timer(300, dataLoggerPressure).start()
+		
+	except:
+		print "Le fichier", FileDataPressure, "est introuvable"
+	finally:
+		filePressure.close
 	
 	return 0
 
@@ -135,10 +174,23 @@ def setup():
 		)
 		
 		Thread(target=receivingDataAmp, args=(ser,)).start()
-		dataLogger()
+		time.sleep (2)
+		dataLoggerAmp()
 	except:
 		global dataAmp
-		dataAmp = 'No Data'
+		dataAmp = '0'
+	
+	try:
+		sensor = BMP085.BMP085(mode=BMP085.BMP085_ULTRAHIGHRES)
+		
+		Thread(target=receivingDataPressure, args=(sensor,)).start()
+		time.sleep (2)
+		dataLoggerPressure()
+	except (ValueError, TypeError, IOError, UnboundLocalError):
+		global dataPressure
+		dataPressure = '0'
+		
+		
 	
 	gpsp = GpsPoller() # create the thread
 	gpsp.start() # start it up
@@ -234,16 +286,16 @@ def reponseAJAX():
 	
 	global gpsd
 	global dataAmp
-	global cogFix
+	global dataPressure
+	global dataTemperature
+	cogFix = '0'
 
-	try:
-		sensor = BMP085.BMP085(mode=BMP085.BMP085_ULTRAHIGHRES)
-		pressure = '{0:0.1f} hPa'.format(sensor.read_sealevel_pressure() / 100)
-		temperature = '{0:0.1f} °C'.format(sensor.read_temperature())
-		
-	except (ValueError, TypeError, IOError, UnboundLocalError):
+	if dataPressure == "0":
 		pressure = "No Data"
 		temperature = "No Data"
+	else:
+		pressure = '{0:0.1f} hPa'.format(dataPressure)
+		temperature = '{0:0.1f} °C'.format(dataTemperature)
 		
 	try:
 		gps = LatLon(gpsd.fix.latitude, gpsd.fix.longitude)
@@ -260,14 +312,8 @@ def reponseAJAX():
 		latitude = latdegMin+" "+latSec+" "+lathemis
 		longitude = londegMin+" "+lonSec+" "+lonhemis
 		
-		if gpsd.fix.track != "nan":
-			cogFix = gpsd.fix.track
-			cog = cogFix
-		else:
-			cog = cogFix
-		
+		cog = '{0:0.1f}°'.format(gpsd.fix.track)
 		sog = '{0:0.1f} Kts'.format(gpsd.fix.speed * 1.852)
-		cog = '{0:0.1f}°'.format(cog)
 
 	except (ValueError, TypeError, IOError, UnboundLocalError):
 		sog = "No Data"

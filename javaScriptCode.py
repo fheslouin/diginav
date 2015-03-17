@@ -61,7 +61,7 @@ jsCodePressure=("""
                     { name: 'Temp' },
                     { name: 'Pressure' }
                     ],
-                url: 'data/dataDigiNav.txt'
+                url: 'data/dataPressure.txt'
             };
             
 			var dataAdapter = new $.jqx.dataAdapter(source,
