@@ -97,7 +97,7 @@ def dataLoggerPressure():
 		filePressure.write(str(dataPressure))
 		filePressure.write('\n')
 
-		threading.Timer(300, dataLoggerPressure).start()
+		threading.Timer(900, dataLoggerPressure).start()
 		
 	except:
 		print "Le fichier", FileDataPressure, "est introuvable"
@@ -162,7 +162,7 @@ def setup():
 	
 	try:
 		ser = Serial(
-			port='/dev/ttyACM0',
+			port='/dev/ttyUSB0',
 			baudrate=9600,
 			bytesize=EIGHTBITS,
 			parity=PARITY_NONE,
@@ -299,18 +299,22 @@ def reponseAJAX():
 		
 	try:
 		gps = LatLon(gpsd.fix.latitude, gpsd.fix.longitude)
-		degMin = gps.to_string('d% %m%')
+		deg = gps.to_string('d%')
+		min = gps.to_string('m%')
 		sec = gps.to_string('%S%')
-		hemis = gps.to_string('%H')		
-		latdegMin = degMin[0].strip("-(')")
-		londegMin = degMin[1].strip("-(')")	
-		latSec = '{0:0.3f}'.format(float(sec[0].strip("(')")))
-		lonSec = '{0:0.3f}'.format(float(sec[1].strip("(')")))
+		hemis = gps.to_string('%H')
+		
+		latDeg = deg[0].strip("-(')")
+		lonDeg = deg[1].strip("-(')")
+		latMin = min[0].strip("(')")
+		lonMin = min[1].strip("(')")
+		latSec = '{0:0.0f}'.format(float(sec[0].strip("(')")))
+		lonSec = '{0:0.0f}'.format(float(sec[1].strip("(')")))
 		lathemis = hemis[0].strip("(')")
 		lonhemis = hemis[1].strip("(')")
 		
-		latitude = latdegMin+" "+latSec+" "+lathemis
-		longitude = londegMin+" "+lonSec+" "+lonhemis
+		latitude = latDeg+"° "+latMin+"' "+latSec+"\" "+lathemis
+		longitude = lonDeg+"° "+lonMin+"' "+lonSec+"\" "+lonhemis
 		
 		cog = '{0:0.1f}°'.format(gpsd.fix.track)
 		sog = '{0:0.1f} Kts'.format(gpsd.fix.speed * 1.852)
